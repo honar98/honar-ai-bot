@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMB BOT - Authentication Callback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            text-align: center;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        h2 { color: #fe2c55; }
+        .code-box {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin-top: 20px;
+            font-family: monospace;
+            color: #00f2fe;
+        }
+        .btn {
+            background: #fe2c55;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .btn:hover { background: #e0244b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>HMB BOT Authentication</h2>
+        <p id="status">Processing your TikTok login...</p>
+        <div id="result" style="display:none;">
+            <p>Authorization Code:</p>
+            <div class="code-box" id="authCode"></div>
+            <button class="btn" onclick="copyCode()">Copy Code</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (code) {
+            document.getElementById('status').innerText = "Login Successful! 🎉";
+            document.getElementById('authCode').innerText = code;
+            document.getElementById('result').style.display = 'block';
+        } else if (error) {
+            document.getElementById('status').innerText = "Login Failed: " + error;
+            document.getElementById('status').style.color = '#ff4d4d';
+        } else {
+            document.getElementById('status').innerText = "No authorization code found.";
+        }
+
+        function copyCode() {
+            const codeText = document.getElementById('authCode').innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
