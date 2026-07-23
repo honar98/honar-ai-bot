@@ -22,25 +22,25 @@ logging.basicConfig(
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 # ==========================================
-# SETTINGS
+# SETTINGS & API CREDENTIALS
 # ==========================================
 
-TELEGRAM_TOKEN = "8401739007:AAEZ4ZQ0yrf4WrG4PGyUzZnjmh28LrdOOVA"
-GROQ_API_KEY = "Gsk_XJ4yiqqgw3CQ9swcZxi1WGdyb3FYcx2fF1aGZpUFHvf0V8D49fYY"
+TELEGRAM_TOKEN = "8401739007:AAEhG6fOwUv2g7MKYdad2zo7PmB8YyxGnVI"
+GROQ_API_KEY = "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"
+
+# TikTok Developer Credentials (OAuth 2.0)
+TIKTOK_CLIENT_KEY = "awqrbi9dy0xtcx1i"
+TIKTOK_CLIENT_SECRET = "hzXZh848hGhzpRQljZJM4XVW1cOCUZHL"
+TIKTOK_REDIRECT_URI = "https://honar98.github.io/honar-ai-bot/callback.html"
 
 MODEL = "llama-3.3-70b-versatile"
-
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
-
 DATABASE_NAME = "honar_ai.db"
-
 MAX_HISTORY = 300
 
 SYSTEM_PROMPT = """
 You are HONAR AI Version 200.
-
 You are a professional AI assistant.
-
 Rules:
 - Speak naturally in Kurdish Badini.
 - Understand Kurdish, Arabic, Turkish and English.
@@ -56,6 +56,46 @@ HEADERS = {
     "Authorization": f"Bearer {GROQ_API_KEY}",
     "Content-Type": "application/json"
 }
+
+# ==========================================
+# TIKTOK OAUTH BACKEND LOGIC
+# ==========================================
+
+def exchange_tiktok_code_for_token(auth_code):
+    token_url = "https://open.tiktokapis.com/v2/oauth/token/"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cache-Control": "no-cache"
+    }
+    payload = {
+        "client_key": TIKTOK_CLIENT_KEY,
+        "client_secret": TIKTOK_CLIENT_SECRET,
+        "code": auth_code,
+        "grant_type": "authorization_code",
+        "redirect_uri": TIKTOK_REDIRECT_URI
+    }
+    
+    try:
+        response = requests.post(token_url, headers=headers, data=payload, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.exception("TikTok OAuth Token Exchange Error")
+        return {"error": str(e)}
+
+def fetch_tiktok_user_info(access_token, open_id):
+    user_info_url = f"https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    try:
+        response = requests.get(user_info_url, headers=headers, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.exception("TikTok Fetch User Info Error")
+        return {"error": str(e)}
 
 # ==========================================
 # SQLITE DATABASE
@@ -173,7 +213,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"👋 سلاڤ {user.first_name}!\n\n"
-        "بەخێربێیت بۆ HONAR AI Version 200.\n"
+        "بەخێربێیت بۆ HONAR AI Version 200 (TikTok Integrated).\n"
         "هەر پرسیارێکت هەیە بنێرە."
     )
 
@@ -192,7 +232,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🤖 HONAR AI Version 200\n"
-        "Powered by Groq AI\n"
+        "Powered by Groq AI & TikTok Login Kit\n"
         "Database: SQLite\n"
         "Language: Kurdish Badini"
     )
@@ -509,7 +549,7 @@ app.add_handler(
 
 print("====================================")
 print(" HONAR AI Version 200 Started")
-print(" Powered by Groq")
+print(" Powered by Groq & TikTok OAuth")
 print("====================================")
 
 app.run_polling(drop_pending_updates=True)
